@@ -90,6 +90,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "PrepPilot — AI Interview Readiness Analyzer" },
+      { name: "description", content: "Master your interviews with AI-powered analysis, personalized coaching, and immersive practice." },
+      { property: "og:description", content: "Master your interviews with AI-powered analysis, personalized coaching, and immersive practice." },
+      { name: "twitter:description", content: "Master your interviews with AI-powered analysis, personalized coaching, and immersive practice." },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/btCnSZU3PPamQTvk69UKxHMNOVE3/social-images/social-1783007818250-prepNapply_image.webp" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/btCnSZU3PPamQTvk69UKxHMNOVE3/social-images/social-1783007818250-prepNapply_image.webp" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
