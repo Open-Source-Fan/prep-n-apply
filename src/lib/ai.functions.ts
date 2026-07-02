@@ -241,7 +241,17 @@ Return JSON: { "summary": "...", "topics": [ {"name":"...","status":"needs revie
 // 9. AI Coach chat (returns markdown text)
 export const coachChat = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { messages: { role: "user" | "assistant"; content: string }[]; context?: string }) => d)
+  .inputValidator((d: { messages: { role: "user" | "assistant"; content: string }[]; context?: string }) =>
+    z
+      .object({
+        messages: z
+          .array(z.object({ role: z.enum(["user", "assistant"]), content: z.string().max(10000) }))
+          .min(1)
+          .max(50),
+        context: bigStr.optional(),
+      })
+      .parse(d),
+  )
   .handler(async ({ data }) => {
     const { text } = await generateText({
       model: getModel(),
