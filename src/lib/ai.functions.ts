@@ -1,7 +1,13 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { generateText } from "ai";
+import { z } from "zod";
 import { createLovableAiGatewayProvider, CHAT_MODEL } from "./ai-gateway.server";
+
+// Shared validation limits to prevent oversized/malicious payloads reaching the LLM
+const shortStr = z.string().trim().max(300);
+const midStr = z.string().trim().max(2000);
+const bigStr = z.string().trim().max(20000);
 
 function getModel() {
   const key = process.env.LOVABLE_API_KEY;
