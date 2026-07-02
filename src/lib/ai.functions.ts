@@ -124,7 +124,17 @@ Return JSON: { "scores": { "technicalDepth": n, "communication": n, "problemSolv
 // 4. Generate full interview report
 export const generateReport = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { jobTitle: string; difficulty: string; qa: { question: string; answer: string; overall?: number }[] }) => d)
+  .inputValidator((d: { jobTitle: string; difficulty: string; qa: { question: string; answer: string; overall?: number }[] }) =>
+    z
+      .object({
+        jobTitle: shortStr.min(1),
+        difficulty: shortStr.min(1),
+        qa: z
+          .array(z.object({ question: midStr, answer: bigStr, overall: z.number().optional() }))
+          .max(50),
+      })
+      .parse(d),
+  )
   .handler(async ({ data }) => {
     return runJson<{
       overall: number;
