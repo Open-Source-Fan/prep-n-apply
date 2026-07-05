@@ -211,33 +211,6 @@ function Room() {
       setFinishing(false);
     }
   };
-        .from("interview_sessions")
-        .update({
-          status: "completed",
-          overall_score: report.overall,
-          readiness_level: report.readinessLevel,
-          report: report as never,
-          completed_at: new Date().toISOString(),
-        })
-        .eq("id", id);
-      // version snapshot
-      const { data: userRes } = await supabase.auth.getUser();
-      if (userRes.user) {
-        await supabase.from("ai_versions").insert({
-          user_id: userRes.user.id,
-          entity_type: "interview_report",
-          entity_id: id,
-          label: session!.job_title,
-          snapshot: report as never,
-        });
-      }
-      navigate({ to: "/report/$id", params: { id } });
-    } catch (e) {
-      console.error(e);
-      toast.error("Couldn't finish. Try again.");
-      setFinishing(false);
-    }
-  };
 
   if (isLoading) return <AppLayout><div className="grid h-96 place-items-center"><Loader2 className="size-6 animate-spin" /></div></AppLayout>;
   if (!session || !current)
