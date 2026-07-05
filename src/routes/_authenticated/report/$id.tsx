@@ -187,7 +187,54 @@ function Report() {
                     <span className="shrink-0 font-bold" style={{ color: barColor(q.score) }}>{q.score}%</span>
                   </span>
                 </AccordionTrigger>
-                <AccordionContent className="text-sm text-muted-foreground">{q.feedback || "No feedback recorded."}</AccordionContent>
+                <AccordionContent className="space-y-3 text-sm text-muted-foreground">
+                  <p>{q.feedback || "No feedback recorded."}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {q.llmScore != null && (
+                      <span className="rounded-md border border-primary/30 bg-primary/5 px-2 py-1 text-xs text-primary">
+                        LLM quality {q.llmScore}%
+                      </span>
+                    )}
+                    {q.ruleScore != null && (
+                      <span className="rounded-md border border-border bg-secondary/40 px-2 py-1 text-xs">
+                        Rule-based {q.ruleScore}%
+                      </span>
+                    )}
+                    {q.contentRelevance != null && (
+                      <span className="rounded-md border border-border bg-secondary/40 px-2 py-1 text-xs">
+                        Content relevance {q.contentRelevance}%
+                      </span>
+                    )}
+                    {/behav/i.test(q.category ?? "") && q.starScore != null && (
+                      <span className="rounded-md border border-border bg-secondary/40 px-2 py-1 text-xs">
+                        STAR completeness {q.starScore}%
+                      </span>
+                    )}
+                    {q.keywordCoverage != null && (
+                      <span className="rounded-md border border-border bg-secondary/40 px-2 py-1 text-xs">
+                        Keyword coverage {q.keywordCoverage}%
+                      </span>
+                    )}
+                  </div>
+                  {/behav/i.test(q.category ?? "") && q.detectedStar && (
+                    <div className="flex flex-wrap gap-2">
+                      {([
+                        ["Situation", q.detectedStar.situation],
+                        ["Task", q.detectedStar.task],
+                        ["Action", q.detectedStar.action],
+                        ["Result", q.detectedStar.result],
+                        ["Quantified impact", q.detectedStar.quantified],
+                      ] as const).map(([label, present]) => (
+                        <span
+                          key={label}
+                          className={`rounded-md px-2 py-1 text-xs ${present ? "bg-success/15 text-success" : "bg-destructive/15 text-destructive"}`}
+                        >
+                          {present ? "✓" : "✗"} {label}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </AccordionContent>
               </AccordionItem>
             ))}
           </Accordion>
