@@ -78,6 +78,13 @@ function ResumePage() {
         match_score: a.matchScore,
         analysis: a as never,
       });
+      // Save the resume to the profile so it's reused in interview setup too.
+      if (resume.trim() !== (profile?.resume_text ?? "").trim()) {
+        await supabase
+          .from("profiles")
+          .update({ resume_text: resume.trim(), resume_file_name: fileName || null })
+          .eq("id", user!.id);
+      }
     } catch (e) {
       console.error(e);
       toast.error("Analysis failed. Try again.");
