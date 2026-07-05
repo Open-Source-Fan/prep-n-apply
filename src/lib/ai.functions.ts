@@ -90,7 +90,38 @@ Return JSON: { "questions": [ { "id": "q1", "text": "...", "category": "Technica
     );
   });
 
-// 3. Evaluate a single answer + optional follow-up
+// 3. Evaluate a single answer — HYBRID: LLM subjective quality + deterministic rule-based signals
+type LlmDim = { score: number; justification: string };
+export type HybridEval = {
+  // LLM subjective layer
+  llm: {
+    technicalDepth: LlmDim;
+    reasoningQuality: LlmDim;
+    problemSolving: LlmDim;
+    answerMaturity: LlmDim;
+    contentRelevance: LlmDim;
+    overall: number;
+  };
+  // Deterministic rule-based layer
+  rule: RuleBreakdown;
+  // Weighting + blended result
+  weights: { llm: number; rule: number };
+  composite: number;
+  // Back-compat surface used by existing UI (overall + a scores map)
+  overall: number;
+  scores: {
+    technicalDepth: number;
+    communication: number;
+    problemSolving: number;
+    contentRelevance: number;
+    practicalExperience: number;
+  };
+  feedback: string;
+  strengths: string[];
+  improvements: string[];
+  followUp: string | null;
+};
+
 export const evaluateAnswer = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
@@ -105,21 +136,74 @@ export const evaluateAnswer = createServerFn({ method: "POST" })
         })
         .parse(d),
   )
-  .handler(async ({ data }) => {
-    return runJson<{
-      scores: { technicalDepth: number; communication: number; problemSolving: number; practicalExperience: number };
+  .handler(async ({ data }): Promise<HybridEval> => {
+    // Layer A — LLM subjective quality (score + justification per dimension)
+    const llmRaw = await runJson<{
+      technicalDepth: LlmDim;
+      reasoningQuality: LlmDim;
+      problemSolving: LlmDim;
+      answerMaturity: LlmDim;
+      contentRelevance: LlmDim;
       overall: number;
       feedback: string;
       strengths: string[];
       improvements: string[];
       followUp: string | null;
     }>(
-      "You are a rigorous, fair interview evaluator. Scores are 0-100.",
+      "You are a rigorous, fair interview evaluator judging SUBJECTIVE answer quality. All scores are 0-100.",
       `Question (${data.category || "general"}, ${data.difficulty} level): ${data.question}
 Candidate answer: ${data.answer || "(no answer given)"}
 Role: ${data.jobTitle}
-Return JSON: { "scores": { "technicalDepth": n, "communication": n, "problemSolving": n, "practicalExperience": n }, "overall": n, "feedback": "2-3 sentence honest feedback", "strengths": ["..."], "improvements": ["..."], "followUp": "a probing follow-up question targeting a gap, or null if the answer was strong" }`,
+Score these subjective dimensions and give a ONE-sentence justification for each:
+- technicalDepth: correctness and depth of technical content
+- reasoningQuality: clarity and soundness of the reasoning
+- problemSolving: quality of the problem-solving approach
+- answerMaturity: seniority, structure, and self-awareness of the answer
+- contentRelevance: how directly the answer addressed what was actually asked
+Return JSON: { "technicalDepth": {"score": n, "justification": "..."}, "reasoningQuality": {"score": n, "justification": "..."}, "problemSolving": {"score": n, "justification": "..."}, "answerMaturity": {"score": n, "justification": "..."}, "contentRelevance": {"score": n, "justification": "..."}, "overall": n, "feedback": "2-3 sentence honest feedback", "strengths": ["..."], "improvements": ["..."], "followUp": "a probing follow-up question targeting a gap, or null if the answer was strong" }`,
     );
+
+    const dim = (d?: LlmDim): LlmDim => ({
+      score: Math.max(0, Math.min(100, Math.round(d?.score ?? 0))),
+      justification: d?.justification ?? "",
+    });
+    const llm = {
+      technicalDepth: dim(llmRaw.technicalDepth),
+      reasoningQuality: dim(llmRaw.reasoningQuality),
+      problemSolving: dim(llmRaw.problemSolving),
+      answerMaturity: dim(llmRaw.answerMaturity),
+      contentRelevance: dim(llmRaw.contentRelevance),
+      overall: Math.max(0, Math.min(100, Math.round(llmRaw.overall ?? 0))),
+    };
+
+    // Layer B — deterministic rule-based signals (no LLM)
+    const rule = scoreAnswerRuleBased({
+      question: data.question,
+      answer: data.answer,
+      role: data.jobTitle,
+      category: data.category,
+    });
+
+    const compositeScore = composite(llm.overall, rule.overall);
+
+    return {
+      llm,
+      rule,
+      weights: { llm: LLM_WEIGHT, rule: RULE_WEIGHT },
+      composite: compositeScore,
+      overall: compositeScore,
+      scores: {
+        technicalDepth: llm.technicalDepth.score,
+        communication: llm.reasoningQuality.score,
+        problemSolving: llm.problemSolving.score,
+        contentRelevance: llm.contentRelevance.score,
+        practicalExperience: llm.answerMaturity.score,
+      },
+      feedback: llmRaw.feedback ?? "",
+      strengths: llmRaw.strengths ?? [],
+      improvements: llmRaw.improvements ?? [],
+      followUp: llmRaw.followUp ?? null,
+    };
   });
 
 // 4. Generate full interview report
