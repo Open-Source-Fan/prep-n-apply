@@ -83,6 +83,14 @@ function Setup() {
     if (!form.jobTitle.trim()) return toast.error("Please enter a job title");
     setLoading(true);
     try {
+      // Persist the resume once so it's reused by the Resume Analyzer too.
+      if (resume.trim() && resume.trim() !== (profile?.resume_text ?? "").trim()) {
+        await supabase
+          .from("profiles")
+          .update({ resume_text: resume.trim(), resume_file_name: resumeName || null })
+          .eq("id", user!.id);
+      }
+
       let jdAnalysis: unknown = null;
       try {
         jdAnalysis = await analyzeJob({ data: { jobTitle: form.jobTitle, company: form.company, jobDescription: form.jobDescription } });
@@ -100,6 +108,7 @@ function Setup() {
             interviewType: form.interviewType,
             difficulty: form.difficulty,
             jdAnalysis,
+            resume: resume.trim() || undefined,
             count: 6,
           },
         });
