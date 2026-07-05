@@ -105,6 +105,33 @@ function Report() {
           </div>
         </div>
 
+        {report.scoring && (
+          <div className="rounded-2xl border border-border bg-card p-5 shadow-card">
+            <h3 className="mb-1 font-semibold">Hybrid scoring breakdown</h3>
+            <p className="mb-4 text-sm text-muted-foreground">
+              Your final score blends two independent layers — subjective LLM quality and deterministic rule-based signals.
+            </p>
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 text-center">
+                <div className="text-3xl font-bold text-primary">{report.scoring.llmAverage}%</div>
+                <div className="mt-1 text-xs text-muted-foreground">
+                  LLM quality · weight {Math.round(report.scoring.weights.llm * 100)}%
+                </div>
+              </div>
+              <div className="rounded-xl border border-chart-2/40 bg-chart-2/5 p-4 text-center">
+                <div className="text-3xl font-bold" style={{ color: "var(--chart-2)" }}>{report.scoring.ruleAverage}%</div>
+                <div className="mt-1 text-xs text-muted-foreground">
+                  Rule-based · weight {Math.round(report.scoring.weights.rule * 100)}%
+                </div>
+              </div>
+              <div className="rounded-xl border border-border bg-secondary/40 p-4 text-center">
+                <div className="text-3xl font-bold text-gradient">{Math.round(report.overall)}%</div>
+                <div className="mt-1 text-xs text-muted-foreground">Composite (blended)</div>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="grid gap-4 lg:grid-cols-2">
           <div className="rounded-2xl border border-border bg-card p-5 shadow-card">
             <h3 className="mb-3 font-semibold">Competency breakdown</h3>
