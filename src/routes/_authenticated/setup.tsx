@@ -41,6 +41,8 @@ function Setup() {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [resume, setResume] = useState("");
+  const [resumeName, setResumeName] = useState("");
   const [form, setForm] = useState({
     jobTitle: "",
     company: "",
@@ -49,6 +51,31 @@ function Setup() {
     interviewType: "Mixed",
     difficulty: "Mid",
   });
+
+  const { data: profile } = useQuery({
+    queryKey: ["profile", user?.id],
+    queryFn: async () => (await supabase.from("profiles").select("*").eq("id", user!.id).maybeSingle()).data,
+    enabled: !!user,
+  });
+
+  // Prefill the saved resume so it's reused across setup and the Resume Analyzer.
+  useEffect(() => {
+    if (profile?.resume_text && !resume) {
+      setResume(profile.resume_text);
+      setResumeName(profile.resume_file_name ?? "");
+    }
+  }, [profile]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const onResumeFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    setResumeName(f.name);
+    if (f.type === "application/pdf") {
+      toast.info("For PDFs, please paste the text into the box below.");
+      return;
+    }
+    setResume(await f.text());
+  };
 
   const set = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
