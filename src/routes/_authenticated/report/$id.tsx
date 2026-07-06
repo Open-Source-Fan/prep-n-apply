@@ -22,7 +22,8 @@ import {
   YAxis,
   Cell,
 } from "recharts";
-import { Loader2, ThumbsUp, ThumbsDown, MessageSquare, RotateCcw } from "lucide-react";
+import { Loader2, ThumbsUp, ThumbsDown, MessageSquare, RotateCcw, Download } from "lucide-react";
+import { downloadReportPdf } from "@/lib/report-pdf";
 
 export const Route = createFileRoute("/_authenticated/report/$id")({
   component: Report,
@@ -88,7 +89,21 @@ function Report() {
             <h1 className="text-3xl font-bold">{session.job_title} — Report</h1>
             <p className="text-muted-foreground">{session.company || "—"} · {session.interview_type} · {session.difficulty}</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              onClick={() =>
+                downloadReportPdf(report, {
+                  jobTitle: session.job_title,
+                  company: session.company,
+                  interviewType: session.interview_type,
+                  difficulty: session.difficulty,
+                  date: session.completed_at ?? session.created_at,
+                })
+              }
+            >
+              <Download className="size-4" /> Download report
+            </Button>
             <Link to="/coach"><Button variant="outline"><MessageSquare className="size-4" /> Ask coach</Button></Link>
             <Link to="/setup"><Button className="gradient-primary text-primary-foreground"><RotateCcw className="size-4" /> New interview</Button></Link>
           </div>
@@ -182,8 +197,8 @@ function Report() {
             {report.perQuestion.map((q, i) => (
               <AccordionItem key={i} value={`q${i}`}>
                 <AccordionTrigger className="text-left">
-                  <span className="flex w-full items-center justify-between gap-3 pr-3">
-                    <span className="truncate">Q{i + 1}: {q.question}</span>
+                  <span className="flex w-full items-start justify-between gap-3 pr-3">
+                    <span className="min-w-0 break-words [overflow-wrap:anywhere]">Q{i + 1}: {q.question}</span>
                     <span className="shrink-0 font-bold" style={{ color: barColor(q.score) }}>{q.score}%</span>
                   </span>
                 </AccordionTrigger>
