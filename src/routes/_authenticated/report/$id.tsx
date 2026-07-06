@@ -89,7 +89,21 @@ function Report() {
             <h1 className="text-3xl font-bold">{session.job_title} — Report</h1>
             <p className="text-muted-foreground">{session.company || "—"} · {session.interview_type} · {session.difficulty}</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              onClick={() =>
+                downloadReportPdf(report, {
+                  jobTitle: session.job_title,
+                  company: session.company,
+                  interviewType: session.interview_type,
+                  difficulty: session.difficulty,
+                  date: session.completed_at ?? session.created_at,
+                })
+              }
+            >
+              <Download className="size-4" /> Download report
+            </Button>
             <Link to="/coach"><Button variant="outline"><MessageSquare className="size-4" /> Ask coach</Button></Link>
             <Link to="/setup"><Button className="gradient-primary text-primary-foreground"><RotateCcw className="size-4" /> New interview</Button></Link>
           </div>
