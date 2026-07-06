@@ -182,8 +182,8 @@ function Report() {
             {report.perQuestion.map((q, i) => (
               <AccordionItem key={i} value={`q${i}`}>
                 <AccordionTrigger className="text-left">
-                  <span className="flex w-full items-center justify-between gap-3 pr-3">
-                    <span className="truncate">Q{i + 1}: {q.question}</span>
+                  <span className="flex w-full items-start justify-between gap-3 pr-3">
+                    <span className="min-w-0 break-words [overflow-wrap:anywhere]">Q{i + 1}: {q.question}</span>
                     <span className="shrink-0 font-bold" style={{ color: barColor(q.score) }}>{q.score}%</span>
                   </span>
                 </AccordionTrigger>
